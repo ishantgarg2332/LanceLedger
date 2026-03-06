@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
         <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
         <p className="text-sm font-medium text-foreground/60">Loading session...</p>
       </div>
