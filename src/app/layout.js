@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Tracker.io | Premium Invoice & Expense Tracker",
+  title: "LanceLedger | Premium Invoice & Expense Tracker",
   description: "Manage your freelance business with ease.",
 };
 

@@ -151,10 +151,10 @@ export const InvoicePDF = ({ invoice, client, origin }) => (
           <Text style={styles.title}>INVOICE</Text>
         </View>
         <View style={styles.companyDetails}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 2 }}>Tracker.io Pro</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 2 }}>LanceLedger Pro</Text>
           <Text>123 Freelance Ave</Text>
           <Text>San Francisco, CA 94105</Text>
-          <Text>hello@tracker.io</Text>
+          <Text>hello@LanceLedger.com</Text>
         </View>
       </View>
 
