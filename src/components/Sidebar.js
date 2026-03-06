@@ -27,7 +27,7 @@ export default function Sidebar() {
             <Receipt className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent tracking-tight">
-            Tracker<span className="text-primary hover:text-primary-hover transition-colors">.io</span>
+            Lance<span className="text-primary hover:text-primary-hover transition-colors">Ledger</span>
           </span>
         </div>
 
