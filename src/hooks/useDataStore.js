@@ -209,43 +209,52 @@ export function useDataStore(key, initialData = []) {
 
     try {
         if (key === 'clients') {
+            const updates = {};
+            if (changes.name !== undefined) updates.name = changes.name;
+            if (changes.email !== undefined) updates.email = changes.email;
+            if (changes.company !== undefined) updates.company = changes.company;
+            if (changes.phone !== undefined) updates.phone = changes.phone;
+            if (changes.address !== undefined) updates.address = changes.address;
+
             const { error } = await supabase
                 .from('clients')
-                .update({
-                    name: changes.name,
-                    email: changes.email,
-                    company: changes.company,
-                    phone: changes.phone,
-                    address: changes.address
-                })
+                .update(updates)
                 .eq('id', id);
             if (error) throw error;
         } else if (key === 'expenses') {
+             const updates = {};
+             if (changes.amount !== undefined) updates.amount = changes.amount;
+             if (changes.category !== undefined) updates.category = changes.category;
+             if (changes.date !== undefined) updates.date = changes.date;
+             if (changes.description !== undefined) updates.description = changes.description;
+
              const { error } = await supabase
                 .from('expenses')
-                .update({
-                    amount: changes.amount,
-                    category: changes.category,
-                    date: changes.date,
-                    description: changes.description
-                })
+                .update(updates)
                 .eq('id', id);
             if (error) throw error;
         } else if (key === 'invoices') {
+             const updates = {};
+             if (changes.clientId !== undefined) updates.client_id = changes.clientId;
+             if (changes.number !== undefined) updates.number = changes.number;
+             if (changes.status !== undefined) updates.status = changes.status;
+             if (changes.dueDate !== undefined) updates.due_date = changes.dueDate;
+             if (changes.notes !== undefined) updates.notes = changes.notes;
+             if (changes.subtotal !== undefined) updates.subtotal = changes.subtotal;
+             if (changes.taxRate !== undefined) updates.tax_rate = changes.taxRate;
+             if (changes.tax !== undefined) updates.tax = changes.tax;
+             if (changes.total !== undefined) updates.total = changes.total;
+
              const { error: invError } = await supabase
                 .from('invoices')
-                .update({
-                    client_id: changes.clientId,
-                    status: changes.status,
-                    due_date: changes.dueDate,
-                    notes: changes.notes,
-                    subtotal: changes.subtotal,
-                    tax_rate: changes.taxRate,
-                    tax: changes.tax,
-                    total: changes.total
-                })
+                .update(updates)
                 .eq('id', id);
-            if (invError) throw invError;
+
+            if (invError) {
+              console.error("Invoice update error:", invError);
+              alert("Failed to update invoice status: " + invError.message);
+              throw invError;
+            }
 
             if (changes.items) {
                 await supabase.from('invoice_items').delete().eq('invoice_id', id);
@@ -260,6 +269,7 @@ export function useDataStore(key, initialData = []) {
         }
     } catch(e) {
          console.error("Failed to update", e);
+         alert("Failed to update data: " + e.message);
     }
   };
 
