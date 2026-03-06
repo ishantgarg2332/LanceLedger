@@ -11,17 +11,6 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 
-// Mock data generator for previewing dashboard before adding real data
-const generateMockData = () => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  return months.map(month => ({
-    name: month,
-    revenue: Math.floor(Math.random() * 5000) + 2000,
-    expenses: Math.floor(Math.random() * 2000) + 500
-  }));
-};
-
-const mockChartData = generateMockData();
 
 const SummaryCard = ({ title, value, icon: Icon, trend, trendValue, isPositive }) => (
   <div className="glass-panel p-6 flex flex-col gap-4">
@@ -61,6 +50,43 @@ export default function Dashboard() {
   // Format currency
   const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
+  // Generate dynamic chart data for the last 6 months
+  const generateChartData = () => {
+    const data = [];
+    const today = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthName = d.toLocaleString('default', { month: 'short' });
+      const year = d.getFullYear();
+      const monthIndex = d.getMonth();
+
+      const monthRevenue = invoices
+        .filter(inv => inv.status === 'Paid')
+        .filter(inv => {
+          const invDate = new Date(inv.createdAt || inv.dueDate);
+          return invDate.getMonth() === monthIndex && invDate.getFullYear() === year;
+        })
+        .reduce((sum, inv) => sum + inv.total, 0);
+
+      const monthExpenses = expenses
+        .filter(exp => {
+          const expDate = new Date(exp.date || exp.createdAt);
+          return expDate.getMonth() === monthIndex && expDate.getFullYear() === year;
+        })
+        .reduce((sum, exp) => sum + exp.amount, 0);
+
+      data.push({
+        name: monthName,
+        revenue: monthRevenue,
+        expenses: monthExpenses
+      });
+    }
+    return data;
+  };
+
+  const chartData = generateChartData();
+
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-12">
       <div className="flex items-center justify-between">
@@ -81,35 +107,23 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <SummaryCard
           title="Total Revenue"
-          value={formatCurrency(totalRevenue || 12450)}
+          value={formatCurrency(totalRevenue)}
           icon={DollarSign}
-          trend="vs last month"
-          trendValue="+12.5%"
-          isPositive={true}
         />
         <SummaryCard
           title="Net Profit"
-          value={formatCurrency(netProfit || 8200)}
+          value={formatCurrency(netProfit)}
           icon={TrendingUp}
-          trend="vs last month"
-          trendValue="+8.2%"
-          isPositive={true}
         />
         <SummaryCard
           title="Pending Invoices"
-          value={formatCurrency(pendingRevenue || 3400)}
+          value={formatCurrency(pendingRevenue)}
           icon={FileText}
-          trend="vs last month"
-          trendValue="-2.4%"
-          isPositive={false}
         />
         <SummaryCard
           title="Total Expenses"
-          value={formatCurrency(totalExpenses || 4250)}
+          value={formatCurrency(totalExpenses)}
           icon={Receipt}
-          trend="vs last month"
-          trendValue="+5.1%"
-          isPositive={false}
         />
       </div>
 
@@ -124,7 +138,7 @@ export default function Dashboard() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
@@ -165,25 +179,56 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold">Recent Activity</h2>
           </div>
           <div className="flex flex-col gap-4">
-            {invoices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center gap-3 opacity-60">
-                <FileText className="w-8 h-8" />
-                <p className="text-sm">No recent invoices.<br/>Create one to get started.</p>
-              </div>
-            ) : (
-              invoices.slice(0, 5).map(inv => (
-                <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-card/50 transition-colors">
+            {(() => {
+              const allActivity = [
+                ...invoices.map(inv => ({
+                  id: `inv-${inv.id}`,
+                  type: 'invoice',
+                  title: `Invoice #${inv.number}`,
+                  subtitle: clients.find(c => c.id === inv.clientId)?.name || 'Unknown Client',
+                  amount: inv.total,
+                  date: new Date(inv.createdAt),
+                  status: inv.status
+                })),
+                ...expenses.map(exp => ({
+                  id: `exp-${exp.id}`,
+                  type: 'expense',
+                  title: exp.description || exp.category,
+                  subtitle: 'Expense',
+                  amount: exp.amount,
+                  date: new Date(exp.createdAt || exp.date)
+                }))
+              ].sort((a, b) => b.date - a.date).slice(0, 5);
+
+              if (allActivity.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center py-8 text-center gap-3 opacity-60">
+                    <FileText className="w-8 h-8" />
+                    <p className="text-sm">No recent activity.<br/>Create an invoice or expense to get started.</p>
+                  </div>
+                );
+              }
+
+              return allActivity.map(activity => (
+                <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-card/50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${inv.status === 'Paid' ? 'bg-emerald-500' : inv.status === 'Sent' ? 'bg-amber-500' : 'bg-foreground/20'}`} />
+                    <div className={`w-2 h-2 rounded-full ${
+                      activity.type === 'expense' ? 'bg-rose-500' :
+                      activity.status === 'Paid' ? 'bg-emerald-500' :
+                      activity.status === 'Sent' ? 'bg-amber-500' :
+                      'bg-foreground/20'
+                    }`} />
                     <div className="flex flex-col">
-                      <span className="font-medium text-sm">Invoice #{inv.number}</span>
-                      <span className="text-xs text-foreground/50">{clients.find(c => c.id === inv.clientId)?.name || 'Unknown Client'}</span>
+                      <span className="font-medium text-sm">{activity.title}</span>
+                      <span className="text-xs text-foreground/50">{activity.subtitle}</span>
                     </div>
                   </div>
-                  <span className="font-medium text-sm">{formatCurrency(inv.total)}</span>
+                  <span className={`font-medium text-sm ${activity.type === 'expense' ? 'text-rose-500' : ''}`}>
+                    {activity.type === 'expense' ? '-' : '+'}{formatCurrency(activity.amount)}
+                  </span>
                 </div>
-              ))
-            )}
+              ));
+            })()}
           </div>
         </div>
       </div>
