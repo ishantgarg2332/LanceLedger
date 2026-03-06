@@ -36,6 +36,9 @@ export default function Dashboard() {
   const { data: invoices, isLoaded: invoicesLoaded } = useDataStore('invoices', []);
   const { data: expenses, isLoaded: expensesLoaded } = useDataStore('expenses', []);
   const { data: clients, isLoaded: clientsLoaded } = useDataStore('clients', []);
+  const { data: settings } = useDataStore('settings', []);
+
+  const currencySymbol = settings[0]?.currencySymbol || '$';
 
   if (!invoicesLoaded || !expensesLoaded || !clientsLoaded) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
@@ -48,7 +51,7 @@ export default function Dashboard() {
   const netProfit = totalRevenue - totalExpenses;
 
   // Format currency
-  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const formatCurrency = (val) => `${currencySymbol}${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)}`;
 
   // Generate dynamic chart data for the last 6 months
   const generateChartData = () => {
@@ -161,7 +164,7 @@ export default function Dashboard() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
-                  tickFormatter={(val) => `$${val}`}
+                  tickFormatter={(val) => `${currencySymbol}${val}`}
                 />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}

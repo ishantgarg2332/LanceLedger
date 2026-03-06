@@ -14,7 +14,10 @@ export default function ReportsPage() {
   const { data: invoices, isLoaded: invoicesLoaded } = useDataStore('invoices', []);
   const { data: expenses, isLoaded: expensesLoaded } = useDataStore('expenses', []);
   const { data: clients, isLoaded: clientsLoaded } = useDataStore('clients', []);
+  const { data: settings } = useDataStore('settings', []);
   const [timeRange, setTimeRange] = useState('year'); // 'month', 'year', 'all'
+
+  const currencySymbol = settings[0]?.currencySymbol || '$';
 
   if (!invoicesLoaded || !expensesLoaded || !clientsLoaded) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
@@ -98,7 +101,7 @@ export default function ReportsPage() {
 
   const monthlyData = Object.values(monthlyDataMap);
 
-  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const formatCurrency = (val) => `${currencySymbol}${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)}`;
 
   const handleExportCSV = () => {
     // Generate simple P&L CSV
@@ -183,7 +186,7 @@ export default function ReportsPage() {
               <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} tickFormatter={(val) => `$${val}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} tickFormatter={(val) => `${currencySymbol}${val}`} />
                 <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fafafa' }} />
                 <Legend verticalAlign="top" height={36} />
                 <Bar dataKey="revenue" name="Revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={50} />

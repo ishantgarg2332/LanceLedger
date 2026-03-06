@@ -13,6 +13,9 @@ const INVOICE_STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue'];
 function InvoicesContent() {
   const { data: invoices, add, update, remove, isLoaded: invoicesLoaded } = useDataStore('invoices', []);
   const { data: clients, isLoaded: clientsLoaded } = useDataStore('clients', []);
+  const { data: settings } = useDataStore('settings', []);
+
+  const currencySymbol = settings[0]?.currencySymbol || '$';
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -194,7 +197,7 @@ function InvoicesContent() {
     }
   };
 
-  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const formatCurrency = (val) => `${currencySymbol}${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)}`;
 
   const { subtotal, tax, total } = calculateTotals(formData.items, formData.taxRate);
 
@@ -359,7 +362,7 @@ function InvoicesContent() {
                               <LinkIcon className="w-4 h-4" />
                             </button>
                           )}
-                          <DownloadPDFButton invoice={invoice} client={client} />
+                          <DownloadPDFButton invoice={invoice} client={client} currencySymbol={currencySymbol} settings={settings[0] || {}} />
                           <button
                             onClick={() => openEditModal(invoice)}
                             className="p-2 text-foreground/50 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"

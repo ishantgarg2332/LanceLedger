@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Link } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Link, Image } from '@react-pdf/renderer';
 
 // Define styles
 const styles = StyleSheet.create({
@@ -13,6 +13,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 40,
+  },
+  logoContainer: {
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+  },
+  logoImage: {
+    objectFit: 'contain',
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 24,
@@ -139,22 +149,35 @@ const styles = StyleSheet.create({
   }
 });
 
-const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+export const InvoicePDF = ({ invoice, client, origin, currencySymbol = '$', settings = {} }) => {
+  const formatCurrency = (val) => `${currencySymbol}${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)}`;
 
-export const InvoicePDF = ({ invoice, client, origin }) => (
+  return (
   <Document>
     <Page size="A4" style={styles.page}>
 
       {/* Header */}
       <View style={styles.header}>
         <View>
+          {settings.logoUrl ? (
+             <View style={styles.logoContainer}>
+                <Image src={settings.logoUrl} style={styles.logoImage} alt="Company Logo" />
+             </View>
+          ) : null}
           <Text style={styles.title}>INVOICE</Text>
         </View>
         <View style={styles.companyDetails}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 2 }}>LanceLedger Pro</Text>
-          <Text>123 Freelance Ave</Text>
-          <Text>San Francisco, CA 94105</Text>
-          <Text>hello@LanceLedger.com</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 2 }}>{settings.companyName || 'LanceLedger Pro'}</Text>
+          {settings.companyAddress ? (
+            settings.companyAddress.split('\n').map((line, i) => <Text key={i}>{line}</Text>)
+          ) : (
+             <>
+               <Text>123 Freelance Ave</Text>
+               <Text>San Francisco, CA 94105</Text>
+             </>
+          )}
+          <Text>{settings.companyEmail || 'hello@LanceLedger.com'}</Text>
+          {settings.taxId && <Text>Tax ID: {settings.taxId}</Text>}
         </View>
       </View>
 
@@ -238,4 +261,5 @@ export const InvoicePDF = ({ invoice, client, origin }) => (
 
     </Page>
   </Document>
-);
+  );
+};

@@ -78,3 +78,25 @@ ON public.expenses FOR ALL USING (auth.uid() = user_id);
 
 -- 4. Enable Realtime (optional, if you want live updates)
 ALTER PUBLICATION supabase_realtime ADD TABLE public.clients, public.invoices, public.expenses;
+
+-- 5. Settings Table
+CREATE TABLE public.settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  company_name TEXT,
+  company_email TEXT,
+  company_address TEXT,
+  tax_id TEXT,
+  currency_symbol TEXT DEFAULT '$',
+  logo_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own settings"
+ON public.settings FOR ALL USING (auth.uid() = user_id);
+
+-- Optional: Add settings to realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE public.settings;

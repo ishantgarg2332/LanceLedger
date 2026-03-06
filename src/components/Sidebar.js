@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, FileText, Receipt, PieChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Receipt, PieChart, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 
 const navigation = [
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Expenses', href: '/expenses', icon: Receipt },
   { name: 'Reports', href: '/reports', icon: PieChart },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {

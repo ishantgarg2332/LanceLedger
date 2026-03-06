@@ -44,6 +44,8 @@ const Input = ({ label, icon: Icon, ...props }) => (
 
 export default function ExpensesPage() {
   const { data: expenses, add, update, remove, isLoaded } = useDataStore('expenses', []);
+  const { data: settings } = useDataStore('settings', []);
+  const currencySymbol = settings[0]?.currencySymbol || '$';
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -113,7 +115,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const formatCurrency = (val) => `${currencySymbol}${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)}`;
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-12">

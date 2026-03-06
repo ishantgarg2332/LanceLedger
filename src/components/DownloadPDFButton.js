@@ -11,12 +11,12 @@ const PDFDownloadLink = dynamic(
   { ssr: false, loading: () => <button className="p-2 text-foreground/20 rounded-lg cursor-not-allowed"><Download className="w-4 h-4" /></button> }
 );
 
-export default function DownloadPDFButton({ invoice, client }) {
+export default function DownloadPDFButton({ invoice, client, currencySymbol = '$', settings = {} }) {
   if (!invoice || !client) return null;
 
   return (
     <PDFDownloadLink
-      document={<InvoicePDF invoice={invoice} client={client} origin={typeof window !== 'undefined' ? window.location.origin : ''} />}
+      document={<InvoicePDF invoice={invoice} client={client} currencySymbol={currencySymbol} settings={settings} origin={typeof window !== 'undefined' ? window.location.origin : ''} />}
       fileName={`Invoice_${invoice.number}.pdf`}
       className="p-2 text-foreground/50 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center justify-center"
       title="Download PDF"

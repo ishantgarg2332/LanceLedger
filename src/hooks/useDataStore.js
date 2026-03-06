@@ -82,6 +82,27 @@ export function useDataStore(key, initialData = []) {
                 address: c.address,
                 createdAt: c.created_at
             })));
+        } else if (key === 'settings') {
+            const { data: settings, error } = await supabase
+              .from('settings')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            if (error) throw error;
+
+            if (settings) {
+                setData([{
+                    id: settings.id,
+                    companyName: settings.company_name,
+                    companyEmail: settings.company_email,
+                    companyAddress: settings.company_address,
+                    taxId: settings.tax_id,
+                    currencySymbol: settings.currency_symbol,
+                    logoUrl: settings.logo_url
+                }]);
+            } else {
+                setData([]);
+            }
         }
       } catch (e) {
         console.error(`Failed to load ${key} from Supabase`, e);
@@ -205,7 +226,12 @@ export function useDataStore(key, initialData = []) {
 
   const update = async (id, changes) => {
     if (!user) return;
-    setData(prev => prev.map(item => item.id === id ? { ...item, ...changes } : item));
+
+    if (key === 'settings') {
+      setData([{ id: id || 'temp', ...data[0], ...changes }]);
+    } else {
+      setData(prev => prev.map(item => item.id === id ? { ...item, ...changes } : item));
+    }
 
     try {
         if (key === 'clients') {
@@ -266,6 +292,19 @@ export function useDataStore(key, initialData = []) {
                 }));
                 await supabase.from('invoice_items').insert(itemsToInsert);
             }
+        } else if (key === 'settings') {
+             const updates = {};
+             if (changes.companyName !== undefined) updates.company_name = changes.companyName;
+             if (changes.companyEmail !== undefined) updates.company_email = changes.companyEmail;
+             if (changes.companyAddress !== undefined) updates.company_address = changes.companyAddress;
+             if (changes.taxId !== undefined) updates.tax_id = changes.taxId;
+             if (changes.currencySymbol !== undefined) updates.currency_symbol = changes.currencySymbol;
+             if (changes.logoUrl !== undefined) updates.logo_url = changes.logoUrl;
+
+             const { error } = await supabase
+                .from('settings')
+                .upsert({ user_id: user.id, ...updates }, { onConflict: 'user_id' });
+             if (error) throw error;
         }
     } catch(e) {
          console.error("Failed to update", e);
