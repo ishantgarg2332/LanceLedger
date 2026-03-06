@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useDataStore } from '@/hooks/useDataStore';
 import Modal from '@/components/Modal';
 import DownloadPDFButton from '@/components/DownloadPDFButton';
-import { Plus, Search, FileText, Calendar, DollarSign, Filter, Building2, Trash2, Edit, CheckCircle2, Clock, Send, AlertCircle, Link as LinkIcon } from 'lucide-react';
+import Toast from '@/components/Toast';
+import { Plus, Search, FileText, Calendar, DollarSign, Filter, Building2, Trash2, Edit, CheckCircle2, Clock, Send, AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 const INVOICE_STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue'];
 
@@ -15,6 +16,9 @@ function InvoicesContent() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [toast, setToast] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -26,11 +30,11 @@ function InvoicesContent() {
         const invoice = invoices.find(i => i.id === id);
         if (invoice && invoice.status !== 'Paid') {
           update(id, { ...invoice, status: 'Paid' });
-          alert('Payment successful! Your invoice has been marked as Paid.');
+          setToast({ message: 'Payment successful! Your invoice has been marked as Paid.', type: 'success' });
         }
         router.replace('/invoices'); // Cleanup URL
       } else if (searchParams.get('canceled') === 'true') {
-        alert('Payment was canceled.');
+        setToast({ message: 'Payment was canceled.', type: 'error' });
         router.replace('/invoices'); // Cleanup URL
       }
     }
@@ -144,36 +148,42 @@ function InvoicesContent() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.clientId) {
-      alert("Please select a client.");
+      setToast({ message: "Please select a client.", type: "error" });
       return;
     }
 
     // Cleanup items & calc total
     const validItems = formData.items.filter(i => i.description.trim() !== '');
     if (validItems.length === 0) {
-      alert("Please add at least one line item.");
+      setToast({ message: "Please add at least one line item.", type: "error" });
       return;
     }
 
-    const { subtotal, tax, total } = calculateTotals(validItems, formData.taxRate);
+    try {
+      setIsSaving(true);
 
-    const dataToSave = {
-      ...formData,
-      items: validItems,
-      subtotal,
-      tax,
-      total
-    };
+      const { subtotal, tax, total } = calculateTotals(validItems, formData.taxRate);
 
-    if (editingInvoice) {
-      update(editingInvoice.id, dataToSave);
-    } else {
-      add(dataToSave);
+      const dataToSave = {
+        ...formData,
+        items: validItems,
+        subtotal,
+        tax,
+        total
+      };
+
+      if (editingInvoice) {
+        await update(editingInvoice.id, dataToSave);
+      } else {
+        await add(dataToSave);
+      }
+      setIsModalOpen(false);
+    } finally {
+      setIsSaving(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = () => {
@@ -295,10 +305,10 @@ function InvoicesContent() {
                           {invoice.status !== 'Paid' && client?.email && (
                             <button
                               id={`send-btn-${invoice.id}`}
+                              disabled={sendingInvoiceId === invoice.id}
                               onClick={async () => {
                                 try {
-                                  const btn = document.getElementById(`send-btn-${invoice.id}`);
-                                  if(btn) btn.style.opacity = '0.5';
+                                  setSendingInvoiceId(invoice.id);
 
                                   const paymentLink = `${window.location.origin}/api/checkout?id=${invoice.id}`;
 
@@ -315,23 +325,25 @@ function InvoicesContent() {
                                     })
                                   });
 
-                                  if(btn) btn.style.opacity = '1';
                                   if (!response.ok) throw new Error('Failed to send email');
-
                                   if (invoice.status === 'Draft') {
                                     update(invoice.id, { ...invoice, status: 'Sent' });
                                   }
-                                  alert(`Invoice sent successfully to ${client.email}!`);
+                                  setToast({ message: `Invoice sent successfully to ${client.email}!`, type: 'success' });
                                 } catch (err) {
-                                  const btn = document.getElementById(`send-btn-${invoice.id}`);
-                                  if(btn) btn.style.opacity = '1';
-                                  alert('Error sending invoice: ' + err.message);
+                                  setToast({ message: 'Error sending invoice: ' + err.message, type: 'error' });
+                                } finally {
+                                  setSendingInvoiceId(null);
                                 }
                               }}
-                              className="p-2 text-foreground/50 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-colors"
+                              className="p-2 text-foreground/50 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Send Invoice Email"
                             >
-                              <Send className="w-4 h-4" />
+                              {sendingInvoiceId === invoice.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                              ) : (
+                                <Send className="w-4 h-4" />
+                              )}
                             </button>
                           )}
                           {invoice.status !== 'Paid' && (
@@ -339,7 +351,7 @@ function InvoicesContent() {
                               onClick={() => {
                                 const url = `${window.location.origin}/api/checkout?id=${invoice.id}`;
                                 navigator.clipboard.writeText(url);
-                                alert('Payment link copied to clipboard: ' + url);
+                                setToast({ message: 'Payment link copied to clipboard!', type: 'success' });
                               }}
                               className="p-2 text-foreground/50 hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-colors"
                               title="Copy Payment Link"
@@ -386,8 +398,10 @@ function InvoicesContent() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-6 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors shadow-lg shadow-primary/25"
+                  disabled={isSaving}
+                  className="px-6 py-2 flex items-center gap-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingInvoice ? 'Save Changes' : 'Create Invoice'}
                 </button>
               </div>
@@ -600,6 +614,15 @@ function InvoicesContent() {
           </div>
         </div>
       </Modal>
+
+      {/* Modern Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
