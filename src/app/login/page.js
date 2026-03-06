@@ -68,16 +68,24 @@ export default function LoginPage() {
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="w-full max-w-md z-10 glass-panel p-8 flex flex-col items-center">
-        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 ring-1 ring-primary/20 shadow-lg shadow-primary/20">
-          <Layers className="w-6 h-6" />
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Layers className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent tracking-tight">
+              Lance<span className="text-primary">Ledger</span>
+            </span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight mt-4 text-center">
+            {isLogin ? '' : 'Start managing your freelance business'}
+          </h1>
+          <p className="text-foreground/60 text-sm mt-2 text-center max-w-sm">
+            {isLogin
+              ? 'Enter your credentials to access your dashboard, invoices, and expenses.'
+              : 'Create a free account to generate premium invoices, track your clients, and monitor your revenue.'}
+          </p>
         </div>
-
-        <h1 className="text-2xl font-bold tracking-tight mb-2">
-          {isLogin ? 'Welcome back' : 'Create an account'}
-        </h1>
-        <p className="text-foreground/60 text-sm mb-8 text-center">
-          {isLogin ? 'Enter your credentials to access your dashboard.' : 'Sign up to start managing your freelance business.'}
-        </p>
 
         {error && (
           <div className={`w-full p-3 rounded-lg text-sm mb-6 flex items-start gap-2 ${error.includes('Success') ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>

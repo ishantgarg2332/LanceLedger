@@ -47,6 +47,11 @@ export const AuthProvider = ({ children }) => {
     );
   }
 
+  // Prevent rendering protected routes while redirecting
+  if (!user && pathname !== '/login') {
+    return null;
+  }
+
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
