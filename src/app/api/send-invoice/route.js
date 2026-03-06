@@ -12,12 +12,17 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const data = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: 'Invoices <onboarding@resend.dev>', // Update this when domain is verified
       to: [email],
       subject: `Invoice ${invoiceNumber} from ${companyName || 'Us'}`,
       react: InvoiceEmail({ invoiceNumber, clientName, amount, dueDate, paymentLink, companyName }),
     });
+
+    if (error) {
+      console.error('Resend API Error:', error);
+      return NextResponse.json({ error: error.message || 'Failed to send email' }, { status: 400 });
+    }
 
     return NextResponse.json(data);
   } catch (error) {
