@@ -51,16 +51,27 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    // Handle URL-based success (e.g. from an email link or external redirect)
     if (searchParams.get('success') === 'true' && !successHandled.current) {
       successHandled.current = true;
       showToast('Subscription activated successfully! Pro features unlocked.', 'success');
-      // Optimistically update the UI to Pro so they don't have to wait for the webhook to finish
       if (settingsData.length > 0) {
         updateSettings(settingsData[0].id, { planType: 'pro' });
       }
-      // Clean up the URL
       router.replace('/settings');
     }
+
+    // Handle in-page native modal success
+    const handleNativeSuccess = (e) => {
+      // The modal stays on the page, so we just optimistically upgrade them here
+      showToast('Subscription activated successfully! Pro features unlocked.', 'success');
+      if (settingsData.length > 0) {
+        updateSettings(settingsData[0].id, { planType: 'pro' });
+      }
+    };
+
+    window.addEventListener('razorpay_success', handleNativeSuccess);
+    return () => window.removeEventListener('razorpay_success', handleNativeSuccess);
   }, [searchParams, router, settingsData, updateSettings]);
 
   const handleChange = (e) => {
