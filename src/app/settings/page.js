@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useDataStore } from '@/hooks/useDataStore';
 import { Building2, Mail, MapPin, FileDigit, CircleDollarSign, Image as ImageIcon, Save, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
@@ -20,6 +21,8 @@ export default function SettingsPage() {
   const { data: invoices, isLoaded: invoicesLoaded, update: updateInvoice } = useDataStore('invoices', []);
   const { data: expenses, isLoaded: expensesLoaded, update: updateExpense } = useDataStore('expenses', []);
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -45,6 +48,18 @@ export default function SettingsPage() {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   };
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      showToast('Subscription activated successfully! Pro features unlocked.', 'success');
+      // Optimistically update the UI to Pro so they don't have to wait for the webhook to finish
+      if (settingsData.length > 0) {
+        updateSettings(settingsData[0].id, { planType: 'pro' });
+      }
+      // Clean up the URL
+      router.replace('/settings');
+    }
+  }, [searchParams, router, settingsData, updateSettings]);
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
