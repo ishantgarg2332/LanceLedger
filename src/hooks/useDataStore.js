@@ -302,10 +302,12 @@ export function useDataStore(key, initialData = []) {
              if (changes.currencySymbol !== undefined) updates.currency_symbol = changes.currencySymbol;
              if (changes.logoUrl !== undefined) updates.logo_url = changes.logoUrl;
 
-             const { error } = await supabase
-                .from('settings')
-                .upsert({ user_id: user.id, ...updates }, { onConflict: 'user_id' });
-             if (error) throw error;
+             if (Object.keys(updates).length > 0) {
+                 const { error } = await supabase
+                    .from('settings')
+                    .upsert({ user_id: user.id, ...updates }, { onConflict: 'user_id' });
+                 if (error) throw error;
+             }
         }
     } catch(e) {
          console.error("Failed to update", e);
