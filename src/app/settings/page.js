@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDataStore } from '@/hooks/useDataStore';
 import { Building2, Mail, MapPin, FileDigit, CircleDollarSign, Image as ImageIcon, Save, Loader2 } from 'lucide-react';
@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const successHandled = useRef(false);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -50,7 +51,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    if (searchParams.get('success') === 'true') {
+    if (searchParams.get('success') === 'true' && !successHandled.current) {
+      successHandled.current = true;
       showToast('Subscription activated successfully! Pro features unlocked.', 'success');
       // Optimistically update the UI to Pro so they don't have to wait for the webhook to finish
       if (settingsData.length > 0) {
