@@ -60,18 +60,39 @@ export default function SettingsPage() {
       }, 1500);
     }
 
-    // Handle in-page native modal success
-    const handleNativeSuccess = (e) => {
-      showToast('Subscription activated successfully! Pro features unlocked.', 'success');
-      // Wait a moment for the webhook to finish updating Supabase, then hard reload
-      setTimeout(() => {
-        window.location.href = '/settings';
-      }, 1500);
+    const handleNativeSuccess = async (e) => {
+      const response = e.detail;
+      showToast('Verifying payment...', 'success');
+
+      try {
+        const res = await fetch('/api/subscribe/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_subscription_id: response.razorpay_subscription_id,
+            user_id: user?.id
+          })
+        });
+
+        if (res.ok) {
+          showToast('Subscription activated successfully! Pro features unlocked.', 'success');
+          setTimeout(() => {
+            window.location.href = '/settings';
+          }, 1000);
+        } else {
+          showToast('Verification delayed. Check back in a few minutes.', 'error');
+          setTimeout(() => {
+            window.location.href = '/settings';
+          }, 2000);
+        }
+      } catch (err) {
+        showToast('Error verifying subscription.', 'error');
+      }
     };
 
     window.addEventListener('razorpay_success', handleNativeSuccess);
     return () => window.removeEventListener('razorpay_success', handleNativeSuccess);
-  }, [searchParams, router, settingsData, updateSettings]);
+  }, [searchParams, router, settingsData, updateSettings, user]);
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
