@@ -7,6 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
+import UpgradeBanner from '@/components/UpgradeBanner';
 
 const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#64748b'];
 
@@ -21,6 +22,19 @@ export default function ReportsPage() {
 
   if (!invoicesLoaded || !expensesLoaded || !clientsLoaded) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
+  }
+
+  const isPro = settings[0]?.planType === 'pro';
+
+  if (!isPro) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] max-w-2xl mx-auto w-full">
+        <UpgradeBanner
+          title="Premium Analytics"
+          description="Unlock detailed reports, profit margins, and exportable financial data with LanceLedger Pro."
+        />
+      </div>
+    );
   }
 
   // Filter data based on time range

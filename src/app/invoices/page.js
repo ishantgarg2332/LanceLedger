@@ -6,7 +6,8 @@ import { useDataStore } from '@/hooks/useDataStore';
 import Modal from '@/components/Modal';
 import DownloadPDFButton from '@/components/DownloadPDFButton';
 import Toast from '@/components/Toast';
-import { Plus, Search, FileText, Calendar, DollarSign, Filter, Building2, Trash2, Edit, CheckCircle2, Clock, Send, AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react';
+import UpgradeBanner from '@/components/UpgradeBanner';
+import { Plus, Search, FileText, Calendar, DollarSign, Filter, Building2, Trash2, Edit, CheckCircle2, Clock, Send, AlertCircle, Link as LinkIcon, Loader2, Sparkles } from 'lucide-react';
 
 const INVOICE_STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue'];
 
@@ -48,6 +49,9 @@ function InvoicesContent() {
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const isPro = settings[0]?.planType === 'pro';
 
   const generateInvoiceNumber = () => {
     const prefix = 'INV-';
@@ -106,6 +110,11 @@ function InvoicesContent() {
   };
 
   const openAddModal = () => {
+    if (!isPro && invoices.length >= 3) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setEditingInvoice(null);
     setFormData({
       number: generateInvoiceNumber(),
@@ -615,6 +624,20 @@ function InvoicesContent() {
               Delete Invoice
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Upgrade Modal */}
+      <Modal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Upgrade Required"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-foreground/80">
+            You've reached the free tier limit of 3 invoices. Upgrade to LanceLedger Pro to create unlimited invoices and unlock all premium features.
+          </p>
+          <UpgradeBanner title="Get Unlimited Invoices" description="" />
         </div>
       </Modal>
 

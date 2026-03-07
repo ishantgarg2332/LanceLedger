@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Layers, Mail, Lock, ArrowRight, Loader2, User } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -70,9 +71,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md z-10 glass-panel p-8 flex flex-col items-center">
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <Layers className="w-6 h-6 text-white" />
-            </div>
+            <Logo className="w-10 h-10 rounded-xl shadow-lg shadow-primary/20 bg-primary" />
             <span className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent tracking-tight">
               Lance<span className="text-primary">Ledger</span>
             </span>

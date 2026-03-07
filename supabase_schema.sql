@@ -89,6 +89,9 @@ CREATE TABLE public.settings (
   tax_id TEXT,
   currency_symbol TEXT DEFAULT '$',
   logo_url TEXT,
+  plan_type TEXT DEFAULT 'free',
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );

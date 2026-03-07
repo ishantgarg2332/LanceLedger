@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, FileText, Receipt, PieChart, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
+import Logo from '@/components/Logo';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -24,9 +25,7 @@ export default function Sidebar() {
     <div className="w-64 flex-shrink-0 h-screen sticky top-0 border-r border-border bg-card/10 backdrop-blur-xl">
       <div className="h-full flex flex-col p-4">
         <div className="flex items-center gap-2 mb-8 px-2 mt-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <Receipt className="w-5 h-5 text-white" />
-          </div>
+          <Logo className="w-8 h-8 rounded-lg shadow-lg shadow-primary/20 bg-primary" />
           <span className="text-xl font-bold bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent tracking-tight">
             Lance<span className="text-primary hover:text-primary-hover transition-colors">Ledger</span>
           </span>

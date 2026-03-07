@@ -102,6 +102,8 @@ export default function SettingsPage() {
     );
   }
 
+  const isPro = settingsData[0]?.planType === 'pro';
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -177,15 +179,19 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">Default Currency Symbol</label>
+            <div className={`space-y-2 ${!isPro ? 'opacity-60' : ''}`}>
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-foreground/80">Default Currency Symbol</label>
+                {!isPro && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">Pro Only</span>}
+              </div>
               <div className="relative">
                 <CircleDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                 <select
                   name="currencySymbol"
                   value={formData.currencySymbol || '$'}
                   onChange={handleChange}
-                  className="w-full bg-background/50 border border-border rounded-lg pl-10 pr-3 py-2 text-sm outline-none focus:border-primary transition-colors focus:ring-1 focus:ring-primary/50 appearance-none"
+                  disabled={!isPro}
+                  className="w-full bg-background/50 border border-border rounded-lg pl-10 pr-3 py-2 text-sm outline-none focus:border-primary transition-colors focus:ring-1 focus:ring-primary/50 appearance-none disabled:cursor-not-allowed"
                 >
                   <option value="$">US Dollar ($)</option>
                   <option value="€">Euro (€)</option>
@@ -198,8 +204,11 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-foreground/80">Logo URL (Optional)</label>
+            <div className={`space-y-2 md:col-span-2 ${!isPro ? 'opacity-60' : ''}`}>
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-foreground/80">Logo URL</label>
+                {!isPro && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">Pro Only</span>}
+              </div>
               <div className="relative">
                 <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                 <input
@@ -207,8 +216,9 @@ export default function SettingsPage() {
                   name="logoUrl"
                   value={formData.logoUrl || ''}
                   onChange={handleChange}
+                  disabled={!isPro}
                   placeholder="https://example.com/logo.png"
-                  className="w-full bg-background/50 border border-border rounded-lg pl-10 pr-3 py-2 text-sm outline-none focus:border-primary transition-colors focus:ring-1 focus:ring-primary/50"
+                  className="w-full bg-background/50 border border-border rounded-lg pl-10 pr-3 py-2 text-sm outline-none focus:border-primary transition-colors focus:ring-1 focus:ring-primary/50 disabled:cursor-not-allowed"
                 />
               </div>
               <p className="text-xs text-foreground/40 mt-1">Provide a publicly accessible URL to an image to include on your invoices.</p>

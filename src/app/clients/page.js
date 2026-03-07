@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useDataStore } from '@/hooks/useDataStore';
 import Modal from '@/components/Modal';
+import UpgradeBanner from '@/components/UpgradeBanner';
 import { Plus, Search, Building2, User, Users, Mail, Phone, MapPin, MoreVertical, Edit, Trash2 } from 'lucide-react';
 
 const Input = ({ label, icon: Icon, type = "text", ...props }) => (
@@ -22,7 +23,8 @@ const Input = ({ label, icon: Icon, type = "text", ...props }) => (
 );
 
 export default function ClientsPage() {
-  const { data: clients, add, update, remove, isLoaded } = useDataStore('clients', []);
+  const { data: clients, add, update, remove, isLoaded: clientsLoaded } = useDataStore('clients', []);
+  const { data: settings, isLoaded: settingsLoaded } = useDataStore('settings', []);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modal states
@@ -30,13 +32,16 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
     name: '', email: '', company: '', phone: '', address: ''
   });
 
-  if (!isLoaded) return <div className="flex items-center justify-center h-full">Loading...</div>;
+  if (!clientsLoaded || !settingsLoaded) return <div className="flex items-center justify-center h-full">Loading...</div>;
+
+  const isPro = settings[0]?.planType === 'pro';
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,6 +50,10 @@ export default function ClientsPage() {
   );
 
   const openAddModal = () => {
+    if (!isPro && clients.length >= 2) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setEditingClient(null);
     setFormData({ name: '', email: '', company: '', phone: '', address: '' });
     setIsModalOpen(true);
@@ -284,6 +293,20 @@ export default function ClientsPage() {
               Delete Client
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Upgrade Modal */}
+      <Modal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Upgrade Required"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-foreground/80">
+            You've reached the free tier limit of 2 clients. Upgrade to LanceLedger Pro to manage unlimited clients and grow your business.
+          </p>
+          <UpgradeBanner title="Get Unlimited Clients" description="" />
         </div>
       </Modal>
     </div>

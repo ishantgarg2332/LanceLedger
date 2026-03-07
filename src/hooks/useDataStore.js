@@ -98,10 +98,11 @@ export function useDataStore(key, initialData = []) {
                     companyAddress: settings.company_address,
                     taxId: settings.tax_id,
                     currencySymbol: settings.currency_symbol,
-                    logoUrl: settings.logo_url
+                    logoUrl: settings.logo_url,
+                    planType: settings.plan_type || 'free'
                 }]);
             } else {
-                setData([]);
+                setData([{ planType: 'free' }]);
             }
         }
       } catch (e) {
