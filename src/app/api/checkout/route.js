@@ -1,81 +1,82 @@
-import Stripe from 'stripe';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import Razorpay from 'razorpay';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
-// Use the Service Role Key to bypass RLS and securely fetch the invoice across user boundaries
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const invoiceId = searchParams.get('id');
+    const url = new URL(req.url);
+    const invoiceId = url.searchParams.get('id');
 
     if (!invoiceId) {
-      return NextResponse.json({ error: 'Missing invoiceId' }, { status: 400 });
+      return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
     }
 
-    if (!supabaseServiceKey || supabaseServiceKey === 'your_supabase_service_role_key_here') {
-      return NextResponse.json({ error: 'Stripe API is not fully configured (Missing Service Role Key)' }, { status: 500 });
+    if (!supabaseServiceKey || !process.env.RAZORPAY_KEY_ID) {
+      return NextResponse.json({ error: 'Razorpay API is not fully configured' }, { status: 500 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Fetch invoice from Supabase securely
+    // Fetch the invoice
     const { data: invoice, error } = await supabase
       .from('invoices')
       .select(`
         *,
-        client:clients (
+        clients (
+          name,
           email,
-          name
+          phone
         )
       `)
       .eq('id', invoiceId)
       .single();
 
     if (error || !invoice) {
-        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
 
-    const amount = Number(invoice.total);
-    const invoiceNumber = invoice.number;
-    const clientEmail = invoice.client?.email;
+    if (invoice.status === 'Paid') {
+      // Just redirect them back if it's already paid
+      return NextResponse.redirect(new URL(`/reports?paid=true&id=${invoice.id}`, req.url));
+    }
 
-    // Convert amount to cents (Stripe requires smallest currency unit)
-    const unitAmount = Math.round(amount * 100);
+    // Convert amount to paise (Razorpay requires smallest currency unit)
+    const amountInPaise = Math.round(invoice.total * 100);
 
-    // Create a Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      customer_email: clientEmail || undefined,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Invoice ${invoiceNumber}`,
-              description: `Payment for outstanding invoice ${invoiceNumber}`,
-            },
-            unit_amount: unitAmount,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoices?success=true&invoice_id=${invoiceId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoices?canceled=true`,
-      metadata: {
-        invoiceId: invoiceId,
+    // Create a Razorpay Payment Link
+    const paymentLinkRequest = {
+      amount: amountInPaise,
+      currency: 'INR', // Defaulting to INR, can be made dynamic based on settings if needed
+      accept_partial: false,
+      description: `Payment for Invoice ${invoice.number}`,
+      customer: {
+        name: invoice.clients?.name || 'Customer',
+        email: invoice.clients?.email || 'customer@example.com',
+        contact: invoice.clients?.phone || '',
       },
-    });
+      notify: {
+        sms: false,
+        email: true,
+      },
+      reminder_enable: true,
+      callback_url: `${req.headers.get('origin')}/reports?success=true&invoice_id=${invoice.id}`,
+      callback_method: 'get'
+    };
 
-    // Redirect the user directly to the Stripe Checkout page
-    return NextResponse.redirect(session.url);
+    const paymentLink = await razorpay.paymentLink.create(paymentLinkRequest);
+
+    // Redirect the user directly to the Razorpay checkout page
+    return NextResponse.redirect(paymentLink.short_url);
+
   } catch (error) {
-    console.error('Error creating Stripe session:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error creating Razorpay payment link:', error);
+    return NextResponse.json({ error: 'Failed to create payment link' }, { status: 500 });
   }
 }

@@ -1,24 +1,56 @@
-import { Lock, Sparkles } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Lock, Sparkles, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function UpgradeBanner({ title = 'Upgrade to Pro', description = 'Unlock premium features to grow your business.' }) {
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Dynamically load Razorpay checkout script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    }
+  }, []);
 
   const handleUpgrade = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/subscribe', { method: 'POST' });
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.subscription_id && data.key_id) {
+        const options = {
+          key: data.key_id,
+          subscription_id: data.subscription_id,
+          name: 'LanceLedger',
+          description: 'Pro Subscription',
+          handler: function (response) {
+            window.location.href = `/settings?success=true&subscription_id=${response.razorpay_subscription_id}`;
+          },
+          theme: {
+            color: '#6366f1' // Using our tailwind indigo-500 equivalent primary color
+          }
+        };
+
+        const rzp1 = new window.Razorpay(options);
+        rzp1.on('payment.failed', function (response){
+           alert('Payment Failed: ' + response.error.description);
+        });
+        rzp1.open();
       } else {
-        throw new Error(data.error || 'Failed to start checkout');
+        throw new Error('Failed to start checkout');
       }
     } catch (err) {
       console.error(err);
       alert('Could not start checkout session. ' + err.message);
+    } finally {
       setLoading(false);
     }
   };

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, FileText, Receipt, PieChart, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import Logo from '@/components/Logo';
+import { useDataStore } from '@/hooks/useDataStore';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -18,17 +19,25 @@ const navigation = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const { data: settings } = useDataStore('settings', []);
+
+  const isPro = settings[0]?.planType === 'pro';
 
   if (pathname === '/login') return null;
 
   return (
     <div className="w-64 flex-shrink-0 h-screen sticky top-0 border-r border-border bg-card/10 backdrop-blur-xl">
       <div className="h-full flex flex-col p-4">
-        <div className="flex items-center gap-2 mb-8 px-2 mt-2">
+        <div className="flex items-center gap-3 mb-8 px-2 mt-2">
           <Logo className="w-8 h-8 rounded-lg shadow-lg shadow-primary/20 bg-primary" />
-          <span className="text-xl font-bold bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent tracking-tight">
-            Lance<span className="text-primary hover:text-primary-hover transition-colors">Ledger</span>
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent tracking-tight leading-none">
+              Lance<span className="text-primary hover:text-primary-hover transition-colors">Ledger</span>
+            </span>
+            <span className={`text-[10px] mt-0.5 uppercase tracking-wider font-bold ${isPro ? 'text-primary' : 'text-foreground/40'}`}>
+              {isPro ? 'Pro' : 'Free'}
+            </span>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1.5">
@@ -65,7 +74,9 @@ export default function Sidebar() {
                     ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
                     : (user?.email || 'User')}
                 </span>
-                <span className="text-xs text-foreground/40">Pro Plan</span>
+                <span className={`text-xs font-medium ${isPro ? 'text-primary' : 'text-foreground/40'}`}>
+                  {isPro ? 'Pro Plan' : 'Free Plan'}
+                </span>
               </div>
             </div>
             <button
