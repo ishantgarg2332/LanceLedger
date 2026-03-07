@@ -55,19 +55,18 @@ export default function SettingsPage() {
     if (searchParams.get('success') === 'true' && !successHandled.current) {
       successHandled.current = true;
       showToast('Subscription activated successfully! Pro features unlocked.', 'success');
-      if (settingsData.length > 0) {
-        updateSettings(settingsData[0].id, { planType: 'pro' });
-      }
-      router.replace('/settings');
+      setTimeout(() => {
+        window.location.href = '/settings';
+      }, 1500);
     }
 
     // Handle in-page native modal success
     const handleNativeSuccess = (e) => {
-      // The modal stays on the page, so we just optimistically upgrade them here
       showToast('Subscription activated successfully! Pro features unlocked.', 'success');
-      if (settingsData.length > 0) {
-        updateSettings(settingsData[0].id, { planType: 'pro' });
-      }
+      // Wait a moment for the webhook to finish updating Supabase, then hard reload
+      setTimeout(() => {
+        window.location.href = '/settings';
+      }, 1500);
     };
 
     window.addEventListener('razorpay_success', handleNativeSuccess);
